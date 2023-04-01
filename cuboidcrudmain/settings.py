@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 from decouple import config
+from django.core.management.commands.runserver import Command as runserver
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -135,7 +136,10 @@ STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "cuboidapp/static/cuboidapp")]
+try:
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, "cuboidapp/static/cuboidapp/")]
+except:
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, "cuboidapp/static/cuboidapp")]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(str(BASE_DIR), "cuboidapp/static/cuboidapp/images/")
@@ -144,3 +148,9 @@ MEDIA_ROOT = os.path.join(str(BASE_DIR), "cuboidapp/static/cuboidapp/images/")
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Changing Default runserver PORT
+try:
+    runserver.default_port = config("PORT")
+except ImportError:
+    runserver.default_port = os.environ.get("PORT")
