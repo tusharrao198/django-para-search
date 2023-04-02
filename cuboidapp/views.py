@@ -37,16 +37,20 @@ def add_box(request):
         return Response({'error': 'User has exceeded the limit of boxes added in a week.'}, status=400)
     
     serializer = BoxSerializer(data=data)
+    print(serializer.is_valid())
+    print(serializer.errors)
     if serializer.is_valid():
+        print(f"is valid \n")
         # Check if average area and volume of all boxes do not exceed their limits
         all_boxes = Box.objects.all()
+        cnt =all_boxes.count()
         all_boxes_area = sum([box.length * box.breadth for box in all_boxes])
         all_boxes_volume = sum([box.length * box.breadth * box.height for box in all_boxes])
         new_box_area = data['length'] * data['breadth']
         new_box_volume = data['length'] * data['breadth'] * data['height']
-        if (all_boxes_area + new_box_area) / all_boxes.count() > A1:
+        if cnt!=0 and (all_boxes_area + new_box_area) / cnt > A1:
             return Response({'error': 'Average area of all boxes exceed limit.'}, status=400)
-        if (all_boxes_volume + new_box_volume) / all_boxes.count() > V1:
+        if cnt!=0 and (all_boxes_volume + new_box_volume) / cnt > V1:
             return Response({'error': 'Average volume of all boxes exceed limit.'}, status=400)
         
         # Create and save the new box

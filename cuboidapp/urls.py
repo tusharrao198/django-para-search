@@ -6,9 +6,9 @@ urlpatterns = [
     path("check", views.example_view, name="check"),
     path("adminview", views.adminview, name="adminview"),
     
-    # path("add", views.add_box, name="add"),
-    # path("update", views.update_box, name="update"),
-    # path("delete", views.delete_box, name="delete"),
-    # path("listall", views.box_list, name="listall"),
-    # path("listmybox", views.list_my_boxes, name="listmybox"),
+    path("addbox", views.add_box, name="addbox"),
+    path("updatebox", views.update_box, name="updatebox"),
+    path("deletebox", views.delete_box, name="deletebox"),
+    path("listall", views.box_list, name="listall"),
+    path("listmybox", views.list_my_boxes, name="listmybox"),
 ]
