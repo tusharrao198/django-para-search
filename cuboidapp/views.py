@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET
 
 from django.shortcuts import render
 from .models import Box
-from .serializers import BoxSerializer
+from .serializers import BoxSerializer, BoxlistAllSerializer, BoxlistAllSerializerisStaff
 
 
 A1 = 100
@@ -126,12 +126,12 @@ def update_box(request, pk):
 
 
 # List all Api
+@api_view(['GET'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def box_list(request):
     # get all boxes
     boxes = Box.objects.all()
 
-    # print(f"request.GET = {request.GET}")
     # apply filters based on query parameters
     length_more_than = request.GET.get('length_more_than')
     length_less_than = request.GET.get('length_less_than')
@@ -174,12 +174,15 @@ def box_list(request):
     if created_after:
         boxes = boxes.filter(created_at__gt=datetime.strptime(created_after, '%Y-%m-%d').date())
 
-    # serialize the boxes
-    serializer = BoxSerializer(boxes, many=True)
 
     # add additional fields for staff users
+    # print(request.user," = " ,request.user.is_staff)
     if request.user.is_staff:
-        serializer = serializer.fields + ('created_by', 'modified_at')
+        # serialize the boxes
+        serializer = BoxlistAllSerializerisStaff(boxes, many=True)
+    else:
+        # serialize the boxes
+        serializer = BoxlistAllSerializer(boxes, many=True)         
 
     return JsonResponse(serializer.data, safe=False)
 
