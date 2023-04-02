@@ -12,8 +12,7 @@
         <!-- Font-Awesome CSS -->
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
             integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-        <!-- Custom CSS -->
-        <link rel="stylesheet" type="text/css" href="{% static 'covidtracker/css/style.css' %}">
+
         <!-- Custom fonts -->
         <link rel="preconnect" href="https://fonts.gstatic.com">
         <link href="https://fonts.googleapis.com/css2?family=Raleway&display=swap" rel="stylesheet">
@@ -23,9 +22,25 @@
 
     <body>
 
-        <!-- Back-to-top-button -->
-        <a href="#" class="back-to-top"><i class="fa fa-chevron-up" aria-hidden="true"></i>
-        </a>
+        <div class="container">
+            <form action="/add" method="POST">
+                <div class="mb-3">
+                    <label for="length" class="form-label">length</label>
+                    <input name="length" type="number" class="form-control" id="length">
+                </div>
+                <div class="mb-3">
+                    <label for="breadth" class="form-label">breadth</label>
+                    <input name="breadth" type="number" class="form-control" id="breadth">
+                </div>
+                <div class="mb-3">
+                    <label for="height" class="form-label">height</label>
+                    <input name="height" type="number" class="form-control" id="height">
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+
+        </div>
+
         <!-- JS -->
         <script src="https://code.jquery.com/jquery-3.5.1.js"
             integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
