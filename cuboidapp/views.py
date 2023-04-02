@@ -31,29 +31,29 @@ def add_box(request):
     print(data, "\n", user)
     
     # Check if user has exceeded the limit of boxes added in a week
-    # week_ago = timezone.now() - timedelta(days=7)
-    # boxes_added_this_week = Box.objects.filter(created_by=user, created_at__gte=week_ago).count()
-    # if boxes_added_this_week >= L2:
-    #     return Response({'error': 'User has exceeded the limit of boxes added in a week.'}, status=400)
+    week_ago = timezone.now() - timedelta(days=7)
+    boxes_added_this_week = Box.objects.filter(created_by=user, created_at__gte=week_ago).count()
+    if boxes_added_this_week >= L2:
+        return Response({'error': 'User has exceeded the limit of boxes added in a week.'}, status=400)
     
-    # serializer = BoxSerializer(data=data)
-    # if serializer.is_valid():
-    #     # Check if average area and volume of all boxes do not exceed their limits
-    #     all_boxes = Box.objects.all()
-    #     all_boxes_area = sum([box.length * box.breadth for box in all_boxes])
-    #     all_boxes_volume = sum([box.length * box.breadth * box.height for box in all_boxes])
-    #     new_box_area = data['length'] * data['breadth']
-    #     new_box_volume = data['length'] * data['breadth'] * data['height']
-    #     if (all_boxes_area + new_box_area) / all_boxes.count() > A1:
-    #         return Response({'error': 'Average area of all boxes exceed limit.'}, status=400)
-    #     if (all_boxes_volume + new_box_volume) / all_boxes.count() > V1:
-    #         return Response({'error': 'Average volume of all boxes exceed limit.'}, status=400)
+    serializer = BoxSerializer(data=data)
+    if serializer.is_valid():
+        # Check if average area and volume of all boxes do not exceed their limits
+        all_boxes = Box.objects.all()
+        all_boxes_area = sum([box.length * box.breadth for box in all_boxes])
+        all_boxes_volume = sum([box.length * box.breadth * box.height for box in all_boxes])
+        new_box_area = data['length'] * data['breadth']
+        new_box_volume = data['length'] * data['breadth'] * data['height']
+        if (all_boxes_area + new_box_area) / all_boxes.count() > A1:
+            return Response({'error': 'Average area of all boxes exceed limit.'}, status=400)
+        if (all_boxes_volume + new_box_volume) / all_boxes.count() > V1:
+            return Response({'error': 'Average volume of all boxes exceed limit.'}, status=400)
         
-    #     # Create and save the new box
-    #     serializer.save(created_by=user)
-    #     return Response(serializer.data, status=201)
+        # Create and save the new box
+        serializer.save(created_by=user)
+        return Response(serializer.data, status=201)
     
-    # return Response(serializer.errors, status=400)
+    return Response(serializer.errors, status=400)
 
 
 # Update API
@@ -224,6 +224,15 @@ def list_my_boxes(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def example_view(request, format=None):
+    content = {
+        'user': str(request.user),  # `django.contrib.auth.User` instance.
+        'auth': str(request.auth),  # None
+    }
+    return Response(content)
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def adminview(request, format=None):
     content = {
         'user': str(request.user),  # `django.contrib.auth.User` instance.
         'auth': str(request.auth),  # None

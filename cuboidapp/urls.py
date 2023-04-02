@@ -4,6 +4,7 @@ from cuboidapp.views import *
 
 urlpatterns = [
     path("check", views.example_view, name="check"),
+    path("adminview", views.adminview, name="adminview"),
     
     # path("add", views.add_box, name="add"),
     # path("update", views.update_box, name="update"),
