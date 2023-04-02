@@ -1,4 +1,6 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,6 +10,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
+
 from django.shortcuts import render
 from .models import Box
 from .serializers import BoxSerializer
@@ -216,6 +219,16 @@ def list_my_boxes(request):
 
     return JsonResponse(serializer.data, safe=False)
 
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def example_view(request, format=None):
+    content = {
+        'user': str(request.user),  # `django.contrib.auth.User` instance.
+        'auth': str(request.auth),  # None
+    }
+    return Response(content)
 
 
 def home(request):
