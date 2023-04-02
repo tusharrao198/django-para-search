@@ -28,7 +28,7 @@ def add_box(request):
     data = request.data
     user = request.user
 
-    print(data, "\n", user)
+    # print(data, "\n", user)
     
     # Check if user has exceeded the limit of boxes added in a week
     week_ago = timezone.now() - timedelta(days=7)
@@ -37,10 +37,9 @@ def add_box(request):
         return Response({'error': 'User has exceeded the limit of boxes added in a week.'}, status=400)
     
     serializer = BoxSerializer(data=data)
-    print(serializer.is_valid())
-    print(serializer.errors)
+    # print(serializer.is_valid())
+    # print(serializer.errors)
     if serializer.is_valid():
-        print(f"is valid \n")
         # Check if average area and volume of all boxes do not exceed their limits
         all_boxes = Box.objects.all()
         cnt =all_boxes.count()
@@ -48,6 +47,10 @@ def add_box(request):
         all_boxes_volume = sum([box.length * box.breadth * box.height for box in all_boxes])
         new_box_area = data['length'] * data['breadth']
         new_box_volume = data['length'] * data['breadth'] * data['height']
+
+
+
+        print(f"all_boxes_area = {all_boxes_area} , \n all_boxes_volume = {all_boxes_volume}, \n")
         if cnt!=0 and (all_boxes_area + new_box_area) / cnt > A1:
             return Response({'error': 'Average area of all boxes exceed limit.'}, status=400)
         if cnt!=0 and (all_boxes_volume + new_box_volume) / cnt > V1:
@@ -58,6 +61,22 @@ def add_box(request):
         return Response(serializer.data, status=201)
     
     return Response(serializer.errors, status=400)
+
+
+# Delete API
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_box(request, box_id):
+    try:
+        box = Box.objects.get(id=box_id)
+    except Box.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.user == box.created_by:
+        box.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    return Response(status=status.HTTP_403_FORBIDDEN)
 
 
 # Update API
@@ -106,28 +125,13 @@ def update_box(request, pk):
     return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Delete API
-@api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
-def delete_box(request, box_id):
-    try:
-        box = Box.objects.get(id=box_id)
-    except Box.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    if request.user == box.creator:
-        box.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    return Response(status=status.HTTP_403_FORBIDDEN)
-
-
 # List all Api
-@login_required
+@permission_classes([IsAuthenticated, IsAdminUser])
 def box_list(request):
     # get all boxes
     boxes = Box.objects.all()
 
+    # print(f"request.GET = {request.GET}")
     # apply filters based on query parameters
     length_more_than = request.GET.get('length_more_than')
     length_less_than = request.GET.get('length_less_than')
@@ -175,7 +179,7 @@ def box_list(request):
 
     # add additional fields for staff users
     if request.user.is_staff:
-        serializer = serializer.fields + ('created_by', 'last_updated')
+        serializer = serializer.fields + ('created_by', 'modified_at')
 
     return JsonResponse(serializer.data, safe=False)
 
