@@ -1,17 +1,10 @@
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import datetime, timedelta
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET
-
-from django.shortcuts import render
 from .models import Box
 from .serializers import BoxSerializer, BoxlistAllSerializer, BoxlistAllSerializerisStaff
 
@@ -37,8 +30,6 @@ def add_box(request):
         return Response({'error': 'User has exceeded the limit of boxes added in a week.'}, status=400)
     
     serializer = BoxSerializer(data=data)
-    # print(serializer.is_valid())
-    # print(serializer.errors)
     if serializer.is_valid():
         # Check if average area and volume of all boxes do not exceed their limits
         all_boxes = Box.objects.all()
@@ -48,12 +39,9 @@ def add_box(request):
         new_box_area = data['length'] * data['breadth']
         new_box_volume = data['length'] * data['breadth'] * data['height']
 
-
-
-        print(f"all_boxes_area = {all_boxes_area} , \n all_boxes_volume = {all_boxes_volume}, \n")
-        if cnt!=0 and (all_boxes_area + new_box_area) / cnt > A1:
+        if (all_boxes_area + new_box_area) / (cnt + 1) > A1:
             return Response({'error': 'Average area of all boxes exceed limit.'}, status=400)
-        if cnt!=0 and (all_boxes_volume + new_box_volume) / cnt > V1:
+        if (all_boxes_volume + new_box_volume) / (cnt + 1) > V1:
             return Response({'error': 'Average volume of all boxes exceed limit.'}, status=400)
         
         # Create and save the new box
@@ -82,52 +70,64 @@ def delete_box(request, box_id):
 # Update API
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated, IsAdminUser])
-def update_box(request, pk):
-    box = get_object_or_404(Box, pk=pk)
-    
-    # Check if the user is trying to update the creator or creation date
-    if request.user != box.created_by:
-        return JsonResponse({'error': 'You are not allowed to update the creator or creation date.'}, status=status.HTTP_403_FORBIDDEN)
-    
-    serializer = BoxSerializer(box, data=request.data, partial=True)
-    
-    if serializer.is_valid():
-        # Check the average area condition
-        boxes = Box.objects.all()
-        total_area = sum(box.get_area() for box in boxes)
-        average_area = total_area / len(boxes)
-        a1 = 100 # Default value, should be configured externally
-        if average_area + serializer.validated_data['area'] / len(boxes) > a1:
-            return JsonResponse({'error': f'The average area of all boxes should not exceed {a1}.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Check the average volume condition
-        user_boxes = Box.objects.filter(created_by=request.user)
-        total_volume = sum(box.get_volume() for box in user_boxes)
-        v1 = 1000 # Default value, should be configured externally
-        if total_volume + serializer.validated_data['volume'] > v1:
-            return JsonResponse({'error': f'Your average volume of all boxes should not exceed {v1}.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Check the total boxes added in a week condition
-        week_boxes = Box.objects.filter(created_at__week=request.data['created_at'].isocalendar()[1])
-        l1 = 100 # Default value, should be configured externally
-        if len(week_boxes) + 1 > l1:
-            return JsonResponse({'error': f'Total boxes added in a week cannot be more than {l1}.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Check the total boxes added in a week by a user condition
-        user_week_boxes = user_boxes.filter(created_at__week=request.data['created_at'].isocalendar()[1])
-        l2 = 50 # Default value, should be configured externally
-        if len(user_week_boxes) + 1 > l2:
-            return JsonResponse({'error': f'Total boxes added in a week by a user cannot be more than {l2}.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        serializer.save()
-        return JsonResponse(serializer.data)
-    
-    return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def update_box(request, box_id):
+    if request.data.get('created_by') is not None:
+        return Response({'error': 'Cannot Change Creator, Remove the created_by key from request body'}, status=400)
 
+    try:
+        box = Box.objects.get(id=box_id)
+    except Box.DoesNotExist:
+        return Response({'error': 'Box not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    if request.user.is_staff:
+        creator = box.created_by
+    else:
+        creator = request.user
+    
+    # Check if the user has permission to update the box
+    if not request.user.is_staff and creator != request.user:
+        return Response({'error': 'You do not have permission to update this box'}, status=status.HTTP_403_FORBIDDEN)
+    
+    # Check if the update is allowed based on the new dimensions and the average area condition
+    all_boxes = Box.objects.all()
+    cnt = Box.objects.all().count()        
+    all_boxes_area = sum([box.length * box.breadth for box in all_boxes])
+    
+
+    new_area_sum = (all_boxes_area - (box.length * box.breadth) + request.data['length'] * request.data['breadth'])
+    if (new_area_sum) / cnt > A1:
+        return Response({'error': f'Average area of all added boxes should not exceed {A1}'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if the update is allowed based on the new dimensions and the average volume condition
+
+    user_boxes = Box.objects.filter(created_by=creator)
+    user_boxes_cnt = Box.objects.filter(created_by=creator).count()
+    user_boxes_volume = sum([box.length * box.breadth * box.height for box in user_boxes])
+
+    new_volume_sum = (user_boxes_volume - (box.length * box.breadth * box.height) + request.data['length'] * request.data['breadth'] * request.data['height'])
+
+    if (new_volume_sum) / (user_boxes_cnt) > V1:
+        return Response({'error': 'Average volume of all boxes added by you should not exceed {}'.format(V1)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if the update is allowed based on the total boxes added in a week condition
+    if Box.objects.filter(created_at__gte=timezone.now() - timezone.timedelta(days=7)).count() > L1:
+        return Response({'error': f'Total Boxes added in a week cannot be more than {L1}'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if the update is allowed based on the total boxes added in a week by a user condition
+    if Box.objects.filter(created_by=creator, created_at__gte=timezone.now() - timezone.timedelta(days=7)).count() > L2:
+        return Response({'error': f'Total Boxes added in a week by you cannot be more than {L2}'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    serializer = BoxlistAllSerializerisStaff(box, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save(modified_at=datetime.now())
+        return Response(serializer.data)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # List all Api
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, IsAdminUser])
+@permission_classes([IsAuthenticated])
 def box_list(request):
     # get all boxes
     boxes = Box.objects.all()
@@ -176,7 +176,6 @@ def box_list(request):
 
 
     # add additional fields for staff users
-    # print(request.user," = " ,request.user.is_staff)
     if request.user.is_staff:
         # serialize the boxes
         serializer = BoxlistAllSerializerisStaff(boxes, many=True)
@@ -188,8 +187,8 @@ def box_list(request):
 
 
 # List my boxes:
-@login_required
-@require_GET
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def list_my_boxes(request):
     user = request.user
     boxes = Box.objects.filter(created_by=user)
@@ -226,30 +225,11 @@ def list_my_boxes(request):
     if volume_less_than:
         boxes = boxes.filter(volume__lt=float(volume_less_than))
 
-    serializer = BoxSerializer(boxes, many=True)
+    if request.user.is_staff:
+        # serialize the boxes
+        serializer = BoxlistAllSerializerisStaff(boxes, many=True)
+        # serializer = BoxSerializer(boxes, many=True)
+        return JsonResponse(serializer.data, safe=False)
+    else:
+        return Response({'error': f'Sorry, {request.user}, Only Staff user can see his/her created boxes in the store'}, status=status.HTTP_400_BAD_REQUEST)
 
-    return JsonResponse(serializer.data, safe=False)
-
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def example_view(request, format=None):
-    content = {
-        'user': str(request.user),  # `django.contrib.auth.User` instance.
-        'auth': str(request.auth),  # None
-    }
-    return Response(content)
-
-@api_view(['GET'])
-@permission_classes([IsAdminUser])
-def adminview(request, format=None):
-    content = {
-        'user': str(request.user),  # `django.contrib.auth.User` instance.
-        'auth': str(request.auth),  # None
-    }
-    return Response(content)
-
-
-def home(request):
-    return render(request, "cuboidapp/base.html")
