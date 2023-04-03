@@ -14,7 +14,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'username', 'password', 'email', 'is_staff']
 
     def create(self,validated_data):
-        user = User.objects.create_user(username=validated_data['username'])
+        user = User.objects.create_user(username=validated_data['username'], email=validated_data['email'] , is_staff=validated_data['is_staff'])
         user.set_password(validated_data['password'])
         user.save()
         return user
@@ -42,12 +42,7 @@ urlpatterns += [
     path('admin/', admin.site.urls),
     
     path('', include('cuboidapp.urls')),        
-    path('api-token-auth/', views.obtain_auth_token),
-
-    # path('auth/', include('rest_authtoken.urls')),
-    # path('rest-auth/', include('rest_auth.urls')),    
-    # path('auth/register/', include('rest_auth.registration.urls')),
-    
+    path('api-token-auth/', views.obtain_auth_token),    
 ]
 
 
