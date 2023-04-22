@@ -30,7 +30,7 @@ except ImportError:
     SECRET_KEY = os.environ.get("SECRET_KEY")
     DEBUG = os.environ.get("DEBUG")
 
-ALLOWED_HOSTS = ["cuboidapp.onrender.com", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["*", "127.0.0.1", "localhost"]
 
 # Application definition
 
@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cuboidapp',
     'findme',
     'rest_framework',
     'django_extensions',
@@ -74,7 +73,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'cuboidcrudmain.urls'
 
 TEMPLATE_DIR = os.path.join(
-    str(BASE_DIR), "cuboidapp", "templates", "cuboidapp/"
+    str(BASE_DIR), "findme", "templates", "findme/"
 )
 
 TEMPLATES = [
@@ -163,12 +162,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 try:
-    STATICFILES_DIRS = [os.path.join(BASE_DIR, "cuboidapp/static/cuboidapp/")]
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, "findme/static/findme/")]
 except:
-    STATICFILES_DIRS = [os.path.join(BASE_DIR, "cuboidapp/static/cuboidapp")]
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, "findme/static/findme")]
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(str(BASE_DIR), "cuboidapp/static/cuboidapp/images/")
+MEDIA_ROOT = os.path.join(str(BASE_DIR), "findme/static/findme/images/")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

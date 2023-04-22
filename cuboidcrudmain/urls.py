@@ -36,16 +36,10 @@ router.register(r'users', UserViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-]
-
-urlpatterns += [
     path('admin/', admin.site.urls),
-    
-    path('', include('cuboidapp.urls')),
     path('', include('findme.urls')),        
-    path('api-token-auth/', views.obtain_auth_token),    
+    path('api-token-auth/', views.obtain_auth_token),  
 ]
-
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
