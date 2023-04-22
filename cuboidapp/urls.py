@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from cuboidapp import views
 from cuboidapp.views import *
 
 urlpatterns = [

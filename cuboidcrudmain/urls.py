@@ -41,7 +41,8 @@ urlpatterns = [
 urlpatterns += [
     path('admin/', admin.site.urls),
     
-    path('', include('cuboidapp.urls')),        
+    path('', include('cuboidapp.urls')),
+    path('', include('findme.urls')),        
     path('api-token-auth/', views.obtain_auth_token),    
 ]
 

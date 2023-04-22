@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cuboidapp',
+    'findme',
     'rest_framework',
     'django_extensions',
     'rest_auth',

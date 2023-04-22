@@ -5,8 +5,8 @@ from rest_framework import status
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import Box
-from .serializers import BoxSerializer, BoxlistAllSerializer, BoxlistAllSerializerisStaff
+from cuboidapp.models import Box
+from cuboidapp.serializers import BoxSerializer, BoxlistAllSerializer, BoxlistAllSerializerisStaff
 
 
 A1 = 100
